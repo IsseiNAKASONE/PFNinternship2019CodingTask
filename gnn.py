@@ -55,9 +55,13 @@ class TrainGNN(object):
         self.optimizer = optimizer
 
     def start(self, epoch=100, T=2):
-        while self.train_iter.epoch < epoch:
-            print('epoch:', self.train_iter.epoch, '\tloss:', end='')
-            batch = next(self.train_iter)
+        train_iter = self.train_iter
+
+        while train_iter.epoch < epoch:
+            batch = next(train_iter)
             model = self.optimizer.model
-            self.optimizer.update(F.binary_cross_entropy, model, T, batch=batch)
+            loss = self.optimizer.update(F.binary_cross_entropy, model, T, batch=batch)
+            
+            if train_iter.is_new_epoch: 
+                print('epoch:', self.train_iter.epoch, '\tloss:', loss)
 

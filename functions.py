@@ -24,9 +24,10 @@ class binary_cross_entropy:
         self.graph = inputs[0]
         self.label = inputs[1]
         self.eps = eps
+        self.data = 0
 
     def __getattr__(self, key):
-        if key == 'data': return self.forward()
+        if key == 'data': return self.forward()[1]
 
     def forward(self, model=None):
         if model == None: model = self.model
@@ -36,13 +37,13 @@ class binary_cross_entropy:
         if self.label: loss = softplus(-s)
         else:          loss = softplus(s)
     
-        return loss
+        return h_G, loss
 
     def backward(self):
         model = self.model
         dim = self.model.dim 
-        L = self.forward()
-        h_G = model(self.graph, self.T)
+        h_G, L = self.forward()
+        self.data = L
 
         ### W
         dW = np.zeros((dim, dim))
@@ -53,7 +54,7 @@ class binary_cross_entropy:
                 model_h = self.model.copy_model()
                 model_h.W += de
 
-                L_h = self.forward(model=model_h)
+                _, L_h = self.forward(model=model_h)
                 dW[r, c] = (L_h-L)/self.eps
 
         ### A and b
