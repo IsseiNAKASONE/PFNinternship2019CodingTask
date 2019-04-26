@@ -19,10 +19,15 @@ class Optimizer(object):
 
 class GradientMethod(Optimizer):
 
-    def __init__(self, eps=0.001):
-        self.eps = eps
+    def __init__(self, alpha=0.01):
+        self.alpha = alpha 
 
-    def update(self, lossfun=None, *args):
-        loss = lossfun(*args)
-        
+    def update(self, lossfun=None, *args, **kwds):
+        inputs = kwds['batch'][0]
+        loss = lossfun(*args, inputs)
+        d_params = loss.backward()
+        params = self.model.params
+        n_params = tuple([p - self.alpha*d 
+            for p, d in zip(params, d_params)])
+        self.model.param_update(n_params)
 

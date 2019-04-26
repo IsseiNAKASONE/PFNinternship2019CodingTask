@@ -6,37 +6,58 @@ import functions as F
 
 class GNN(object):
 
-    def __init__(self, in_size=8):
-        self.X = F.one_hot(in_size)
+    def __init__(self, in_size=8, initialW=None,
+            initialA=None, initialb=None):
+        self.in_size = in_size
         ### initialize parameter
-        self.W = np.random.normal(0, 0.4, (in_size, in_size))
-        self.A = np.random.normal(0, 0.4, in_size)
-        self.b = 0
+        if initialW is None:
+            self.W = np.random.normal(0, 0.4, (in_size, in_size))
+        else:
+            self.W = initialW.copy()
+
+        if initialA is None:
+            self.A = np.random.normal(0, 0.4, in_size)
+        else:
+            self.A = initialA.copy()
+        
+        if initialb is None:
+            self.b = 0
+        else:
+            self.b = initialb
     
     def __call__(self, graph, T):
-        X_t = self.X.copy()
+        X = np.zeros((self.in_size, graph.shape[0])) 
+        X[0, :] = 1
         for t in range(T):
-            h = np.dot(X_t, graph)
-            X_t = np.maximum(0, np.dot(self.W, h))
-        return X_t.sum(axis=1)
+            h = np.dot(X, graph)
+            X = np.maximum(0, np.dot(self.W, h))
+        return X.sum(axis=1)
 
-    def param_update(self):
-        pass
-        
+    def __getattr__(self, key):
+        if key == 'dim':      return self.in_size
+        elif key == 'params': return self.W, self.A, self.b
+        else: raise AttributeError
+
+    def param_update(self, params):
+        self.W = params[0]
+        self.A = params[1]
+        self.b = params[2]
+
+    def copy_model(self):
+        return GNN(self.in_size, self.W, self.A, self.b)
+
 
 
 class TrainGNN(object):
 
-    def __init__(self, model, train, optimizer):
-        self.model = model
-        self.train = train
+    def __init__(self, train_iter, optimizer):
+        self.train_iter = train_iter
         self.optimizer = optimizer
 
-    def start(self, epoch=100, batch_size=32, t=2):
-        for e in range(epoch):
-            print('epoch:', e+1, end='')
-            W, A, b = F.gradient(self.model, self.X, self.label, t)
-            self.model.W -= self.alpha*W
-            self.model.A -= self.alpha*A
-            self.model.b -= self.alpha*b
+    def start(self, epoch=100, T=2):
+        while self.train_iter.epoch < epoch:
+            print('epoch:', self.train_iter.epoch, '\tloss:', end='')
+            batch = next(self.train_iter)
+            model = self.optimizer.model
+            self.optimizer.update(F.binary_cross_entropy, model, T, batch=batch)
 

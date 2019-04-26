@@ -11,6 +11,9 @@ class Iterator(object):
         self.order_sampler = ShuffleOrderSampler() 
         self.reset()
 
+    def __iter__(self):
+        return self
+
     def __next__(self):
         self._previous_epoch_detail = self.epoch_detail
 
