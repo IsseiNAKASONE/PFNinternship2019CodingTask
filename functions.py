@@ -3,7 +3,7 @@ import datasets as D
 
    
 def softplus(x):
-    return np.maximum(0,x)+np.log(1+np.exp(-np.abs(x)))
+    return np.maximum(0,x)+np.log2(1+np.exp(-np.abs(x)))
 
 
 def sigmoid(x):
@@ -24,10 +24,10 @@ class binary_cross_entropy:
         self.graph = inputs[0]
         self.label = inputs[1]
         self.eps = eps
-        self.data = 0
+        self.data = 0. 
 
-    def __getattr__(self, key):
-        if key == 'data': return self.forward()[1]
+    def __add__(self, bce):
+        return self.data+self.bce
 
     def forward(self, model=None):
         if model == None: model = self.model

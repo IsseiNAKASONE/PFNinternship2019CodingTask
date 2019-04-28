@@ -11,12 +11,12 @@ import optimizers as op
 from iterator import Iterator
 
 
-#dirpath = '../datasets/train/'
-dirpath = './train/'
+dirpath = '../datasets/train/'
+#dirpath = './train/'
 
 model = gnn.GNN()
 data = D.TupleDataset(dirpath)
-train_iter = Iterator(data, batch_size=16)
+train_iter = Iterator(data, batch_size=32)
 optimizer = op.SGD()
 optimizer.setup(model)
 trainer = gnn.TrainGNN(train_iter, optimizer)
