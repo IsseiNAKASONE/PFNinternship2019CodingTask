@@ -1,30 +1,18 @@
 import numpy as np
 import functions as F
-#import optimizers as op
 
 
 
-class GNN(object):
+class GNN:
 
     def __init__(self, in_size=8, initialW=None,
             initialA=None, initialb=None):
         self.in_size = in_size
         ### initialize parameter
-        if initialW is None:
-            self.W = np.random.normal(0, 0.4, (in_size, in_size))
-        else:
-            self.W = initialW.copy()
+        self.W =  np.random.normal(0, 0.4, (in_size, in_size)) if initialW is None else initialW.copy()
+        self.A =  np.random.normal(0, 0.4, in_size) if initialA is None else initialA.copy()
+        self.b =  0 if initialb is None else initialb
 
-        if initialA is None:
-            self.A = np.random.normal(0, 0.4, in_size)
-        else:
-            self.A = initialA.copy()
-        
-        if initialb is None:
-            self.b = 0
-        else:
-            self.b = initialb
-    
     def __call__(self, graph, T):
         X = np.zeros((self.in_size, graph.shape[0])) 
         X[0, :] = 1
@@ -48,20 +36,36 @@ class GNN(object):
 
 
 
-class TrainGNN(object):
+class TrainGNN:
 
     def __init__(self, train_iter, optimizer):
         self.train_iter = train_iter
         self.optimizer = optimizer
+        self.log = {'epoch':[], 'main/loss':[], 'main/accuracy':[]}
 
     def start(self, epoch=100, T=2):
         train_iter = self.train_iter
+        print('epoch\tmain/loss\tmain/accuracy')
 
         while train_iter.epoch < epoch:
             batch = next(train_iter)
             model = self.optimizer.model
-            loss = self.optimizer.update(F.binary_cross_entropy, model, T, batch=batch)
-            
-            if train_iter.is_new_epoch: 
-                print('epoch:', self.train_iter.epoch, '\tloss:', loss)
+            self.optimizer.update(F.binary_cross_entropy, model, T, batch=batch)
+            if train_iter.is_new_epoch:
+                
+                self.print_report()
+    
+    def print_report(self):
+        op = self.optimizer
+        loss = op.loss
+        accu = op.accuracy
+        
+        self.log['epoch'].append(self.train_iter.epoch)
+        self.log['main/loss'].append(loss)
+        self.log['main/accuracy'].append(accu)
+
+        print('{}'.format(self.train_iter.epoch),
+                '\t{:.6f}'.format(loss),
+                '\t{:.6f}'.format(accu))
+        op.clear()
 

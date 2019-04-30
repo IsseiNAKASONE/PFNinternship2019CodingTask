@@ -3,7 +3,7 @@ import datasets as D
 
    
 def softplus(x):
-    return np.maximum(0,x)+np.log2(1+np.exp(-np.abs(x)))
+    return np.maximum(0,x)+np.log(1+np.exp(-np.abs(x)))
 
 
 def sigmoid(x):
@@ -16,26 +16,35 @@ def one_hot(dim):
     return z
 
 
-class binary_cross_entropy:
+class BinaryCrossEntropy:
 
-    def __init__(self, model, T, inputs, eps=0.001):
+    def __init__(self, model, T, inputs, eps):
         self.model = model
         self.T = T
         self.graph = inputs[0]
         self.label = inputs[1]
         self.eps = eps
-        self.data = 0. 
+        self.data = 0.
+        self.TPTN = None
 
     def __add__(self, bce):
         return self.data+self.bce
 
     def forward(self, model=None):
-        if model == None: model = self.model
+        if model is None: model = self.model
 
         h_G = model(self.graph, self.T)
         s = np.dot(model.A, h_G)+model.b
-        if self.label: loss = softplus(-s)
-        else:          loss = softplus(s)
+
+        ### calculate TPTN and loss
+        if self.label:
+            loss = softplus(-s)
+            if self.TPTN is None:
+                self.TPTN = 1 if s > 0 else 0
+        else:
+            loss = softplus(s)
+            if self.TPTN is None:
+                self.TPTN = 0 if s > 0 else 1 
     
         return h_G, loss
 
@@ -49,11 +58,8 @@ class binary_cross_entropy:
         dW = np.zeros((dim, dim))
         for r in range(dim):
             for c in range(dim):
-                de = np.zeros((dim, dim))
-                de[r, c] += self.eps
                 model_h = self.model.copy_model()
-                model_h.W += de
-
+                model_h.W[r, c] += self.eps
                 _, L_h = self.forward(model=model_h)
                 dW[r, c] = (L_h-L)/self.eps
 
@@ -63,4 +69,9 @@ class binary_cross_entropy:
         dA = L_s*h_G.T
 
         return dW, dA, L_s
-    
+
+
+
+def binary_cross_entropy(model, T, inputs, eps=0.001):
+    return BinaryCrossEntropy(model, T, inputs, eps)
+

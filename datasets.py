@@ -5,7 +5,7 @@ import functions as F
 
 
 
-class TupleDataset(object):
+class TupleDataset:
 
     def __init__(self, dirname):
         self._dirpath = dirname

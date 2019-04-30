@@ -3,7 +3,7 @@ import numpy as np
 
 
 
-class Iterator(object):
+class Iterator:
 
     def __init__(self, dataset, batch_size):
         self.dataset = dataset
@@ -21,10 +21,7 @@ class Iterator(object):
         end = offset + self.batch_size
         N = self._epoch_size
 
-        if self._order is None:
-            batch = self.dataset[offset:end]
-        else:
-            batch = [self.dataset[index] for index in self._order[offset:end]]
+        batch = [self.dataset[index] for index in self._order[offset:end]]
 
         if end >= N:
             rest = end - N
@@ -82,5 +79,4 @@ class ShuffleOrderSampler(object):
         self._random = np.random.random.__self__
 
     def __call__(self, current_order, current_position):
-        return self._random.permutation(len(current_order))
-
+        return self._random.permutation(len(current_order))    
