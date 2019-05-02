@@ -41,19 +41,16 @@ class TrainGNN:
     def __init__(self, train_iter, optimizer):
         self.train_iter = train_iter
         self.optimizer = optimizer
-        self.log = {'epoch':[], 'main/loss':[], 'main/accuracy':[]}
+        self.log = {'epoch':[], 'main/loss':[], 'main/loss/accuracy':[]}
 
     def start(self, epoch=100, T=2):
         train_iter = self.train_iter
-        print('epoch\tmain/loss\tmain/accuracy')
+        print('epoch\tmain/loss\tmain/loss/accuracy')
 
         while train_iter.epoch < epoch:
             batch = next(train_iter)
-            model = self.optimizer.model
-            self.optimizer.update(F.binary_cross_entropy, model, T, batch=batch)
-            if train_iter.is_new_epoch:
-                
-                self.print_report()
+            self.optimizer.update(T, batch, F.binary_cross_entropy)
+            if train_iter.is_new_epoch: self.print_report()
     
     def print_report(self):
         op = self.optimizer
@@ -62,10 +59,9 @@ class TrainGNN:
         
         self.log['epoch'].append(self.train_iter.epoch)
         self.log['main/loss'].append(loss)
-        self.log['main/accuracy'].append(accu)
+        self.log['main/loss/accuracy'].append(1-accu)
 
         print('{}'.format(self.train_iter.epoch),
                 '\t{:.6f}'.format(loss),
-                '\t{:.6f}'.format(accu))
+                '\t{:.6f}'.format(1-accu))
         op.clear()
-

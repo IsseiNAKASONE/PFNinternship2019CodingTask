@@ -12,11 +12,11 @@ from iterator import Iterator
 
 
 #dirpath = '../datasets/train/'
-dirpath = './train/'
+dirpath = 'train/'
 
 model = gnn.GNN()
 data = D.TupleDataset(dirpath)
-train_iter = Iterator(data, batch_size=1000)
+train_iter = Iterator(data, batch_size=10)
 optimizer = op.SGD()
 optimizer.setup(model)
 trainer = gnn.TrainGNN(train_iter, optimizer)

@@ -23,7 +23,7 @@ class Optimizer:
         self.reset()
         return self
 
-    def update(self, lossfun=None, *args, **kwds):
+    def update(self, T, batch, lossfun=None):
         raise NotImplementedError
 
     def report(self, loss, total, TPTN):
@@ -46,9 +46,9 @@ class GradientMethod(Optimizer):
     def __init__(self, alpha=0.01):
         self.alpha = alpha 
 
-    def update(self, lossfun=None, *args, **kwds):
-        inputs = kwds['batch'][0]
-        loss = lossfun(*args, inputs)
+    def update(self, T, batch, lossfun=None):
+        inputs = batch[0]
+        loss = lossfun(self.model, T, inputs)
 
         d_params = loss.backward()
         params = self.model.params
@@ -64,14 +64,14 @@ class SGD(Optimizer):
     def __init__(self, alpha=0.0001):
         self.alpha = alpha
 
-    def update(self, lossfun=None, *args, **kwds):
-        B = len(kwds['batch'])
+    def update(self, T, batch, lossfun=None):
+        B = len(batch)
         d_params = tuple([0]*3)
         loss_lst = []
         tptn = 0
 
-        for b in kwds['batch']:
-            loss = lossfun(*args, b)
+        for b in batch:
+            loss = lossfun(self.model, T, b)
             d_params = [d+l for d, l in zip(d_params, loss.backward())]
             loss_lst = np.hstack((loss_lst, loss.data))
             tptn += loss.TPTN
@@ -92,14 +92,14 @@ class MomentumSGD(Optimizer):
         self.alpha = alpha
         self.eta = eta
 
-    def update(self, lossfun=None, *args, **kwds):
-        B = len(kwds['batch'])
+    def update(self, T, batch, lossfun=None):
+        B = len(batch)
         d_params = tuple([0]*3)
         loss_lst = np.array([])
         tptn = 0
 
-        for b in kwds['batch']:
-            loss = lossfun(*args, b)
+        for b in batch:
+            loss = lossfun(self.model, T, b)
             d_params = [d+l for d, l in zip(d_params, loss.backward())]
             loss_lst = np.hstack((loss_lst, loss.data))
             tptn += loss.TPTN
