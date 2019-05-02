@@ -7,7 +7,7 @@ def softplus(x):
 
 
 def sigmoid(x):
-    return 1/(1+np.exp(-x))
+    return 1/(1+np.exp(-np.clip(x,-709,100000)))
 
 
 def one_hot(dim):

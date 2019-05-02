@@ -85,7 +85,7 @@ class SGD(Optimizer):
 
 class MomentumSGD(Optimizer):
 
-    def __init__(self, alpha=0.01, eta=0.9):
+    def __init__(self, alpha=0.0001, eta=0.9):
         self.alpha = alpha
         self.eta = eta
 

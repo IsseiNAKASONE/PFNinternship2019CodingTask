@@ -1,5 +1,6 @@
 import numpy as np
 import functions as F
+from reporter import Reporter
 
 
 
@@ -42,41 +43,28 @@ class TrainGNN:
         self.train_iter = train_iter
         self.test_iter = test_iter
         self.optimizer = optimizer
-        self.log = {'epoch':[], 'main/loss':[], 'main/accuracy':[]}
+        self.reporter = Reporter() 
 
     def start(self, epoch=100, T=2):
-        print('epoch\tmain/loss\tmain/accuracy', end='')
-        if self.test_iter is not None:
-            print('\tval/loss\tval/main/accuracy', end='')
-        print()
         self.T = T
 
         train_iter = self.train_iter
         while train_iter.epoch < epoch:
             batch = next(train_iter)
             self.optimizer.update(T, batch, F.binary_cross_entropy)
-            if train_iter.is_new_epoch: self.print_report()
+
+            if train_iter.is_new_epoch:
+                loss = self.optimizer.loss
+                accu = self.optimizer.accuracy
+                self.optimizer.clear()
+
+                self.reporter.report('epoch', int(train_iter.epoch))
+                self.reporter.report('main/loss', loss)
+                self.reporter.report('main/accuracy', accu)
+
+                if self.test_iter is not None: self.evaluate()
+                self.reporter.print_report()
     
-    def print_report(self):
-        op = self.optimizer
-        loss = op.loss
-        accu = op.accuracy
-        op.clear()
-
-        self.log['epoch'].append(self.train_iter.epoch)
-        self.log['main/loss'].append(loss)
-        self.log['main/accuracy'].append(accu)
-
-        print('{}'.format(self.train_iter.epoch),
-                '\t{:.6f}'.format(loss),
-                '\t{:.6f}'.format(accu), end='')
-
-        if self.test_iter is not None:
-            val_loss, val_accu = self.evaluate()
-            print('\t{:.6f}'.format(val_loss),
-                    '\t{:.6f}'.format(val_accu), end='')
-        print()
-
     def evaluate(self):
         _val_loss = []
         _val_TPTN = []
@@ -92,5 +80,6 @@ class TrainGNN:
                 _val_TPTN.append(loss.val_TPTN)
         test_iter.reset()
 
-        return np.average(np.array(_val_loss)), np.average(np.array(_val_TPTN)) 
+        self.reporter.report('val/main/loss', np.average(np.array(_val_loss)))
+        self.reporter.report('val/main/accuracy', np.average(np.array(_val_TPTN)))
 

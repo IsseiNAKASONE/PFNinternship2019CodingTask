@@ -1,7 +1,7 @@
 '''
     PFN internship 2019 coding task
     machine learning
-    task-3
+    task-4
     Issei NAKASONE
 '''
 
@@ -19,8 +19,7 @@ train_iter = Iterator(train, batch_size)
 test_iter = Iterator(test, batch_size)
 
 model = gnn.GNN()
-#optimizer = op.SGD()
-optimizer = op.MomentumSGD()
+optimizer = op.SGD()
 optimizer.setup(model)
 trainer = gnn.TrainGNN(optimizer, train_iter, test_iter)
 trainer.start(epoch=100)
