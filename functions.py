@@ -30,6 +30,14 @@ class BinaryCrossEntropy:
     def __add__(self, bce):
         return self.data+self.bce
 
+    def __getattr__(self, key):
+        if key == 'val_data':
+            _, loss = self.forward()
+            return loss
+        if key == 'val_TPTN':
+            if self.TPTN is None: self.forward()
+            return self.TPTN
+
     def forward(self, model=None):
         if model is None: model = self.model
 

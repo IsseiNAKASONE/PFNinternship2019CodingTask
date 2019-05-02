@@ -38,15 +38,20 @@ class GNN:
 
 class TrainGNN:
 
-    def __init__(self, train_iter, optimizer):
+    def __init__(self, optimizer, train_iter, test_iter=None):
         self.train_iter = train_iter
+        self.test_iter = test_iter
         self.optimizer = optimizer
-        self.log = {'epoch':[], 'main/loss':[], 'main/loss/accuracy':[]}
+        self.log = {'epoch':[], 'main/loss':[], 'main/accuracy':[]}
 
     def start(self, epoch=100, T=2):
-        train_iter = self.train_iter
-        print('epoch\tmain/loss\tmain/loss/accuracy')
+        print('epoch\tmain/loss\tmain/accuracy', end='')
+        if self.test_iter is not None:
+            print('\tval/loss\tval/main/accuracy', end='')
+        print()
+        self.T = T
 
+        train_iter = self.train_iter
         while train_iter.epoch < epoch:
             batch = next(train_iter)
             self.optimizer.update(T, batch, F.binary_cross_entropy)
@@ -56,12 +61,36 @@ class TrainGNN:
         op = self.optimizer
         loss = op.loss
         accu = op.accuracy
-        
+        op.clear()
+
         self.log['epoch'].append(self.train_iter.epoch)
         self.log['main/loss'].append(loss)
-        self.log['main/loss/accuracy'].append(1-accu)
+        self.log['main/accuracy'].append(accu)
 
         print('{}'.format(self.train_iter.epoch),
                 '\t{:.6f}'.format(loss),
-                '\t{:.6f}'.format(1-accu))
-        op.clear()
+                '\t{:.6f}'.format(accu), end='')
+
+        if self.test_iter is not None:
+            val_loss, val_accu = self.evaluate()
+            print('\t{:.6f}'.format(val_loss),
+                    '\t{:.6f}'.format(val_accu), end='')
+        print()
+
+    def evaluate(self):
+        _val_loss = []
+        _val_TPTN = []
+
+        test_iter = self.test_iter
+        model = self.optimizer.model
+
+        while test_iter.epoch == 0:
+            batch = next(test_iter)
+            for b in batch:
+                loss = F.binary_cross_entropy(model, self.T, b)
+                _val_loss.append(loss.val_data)
+                _val_TPTN.append(loss.val_TPTN)
+        test_iter.reset()
+
+        return np.average(np.array(_val_loss)), np.average(np.array(_val_TPTN)) 
+

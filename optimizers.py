@@ -7,12 +7,11 @@ import functions as F
 class Optimizer:
     model = None
     _loss = np.array([]) 
-    _total = 0
-    _TPTN = 0 
+    _TPTN = np.array([]) 
 
     def __getattr__(self, key):
-        if key == 'accuracy' and self._total != 0:
-            return self._TPTN/self._total
+        if key == 'accuracy' and self._TPTN.size != 0:
+            return np.average(self._TPTN)
         elif key == 'loss' and self._loss.size != 0:
             return np.average(self._loss)
         else:
@@ -26,15 +25,13 @@ class Optimizer:
     def update(self, T, batch, lossfun=None):
         raise NotImplementedError
 
-    def report(self, loss, total, TPTN):
-        self._loss = np.hstack((self._loss, loss))
-        self._total += total
-        self._TPTN += TPTN
+    def report(self, loss, TPTN):
+        self._loss = np.hstack((self._loss, np.array(loss)))
+        self._TPTN = np.hstack((self._TPTN, np.array(TPTN)))
 
     def clear(self):
         self._loss = np.array([])
-        self._total = 0
-        self._TPTN = 0
+        self._TPTN = np.array([])
 
     def reset(self):
         pass
@@ -56,25 +53,25 @@ class GradientMethod(Optimizer):
             for p, d in zip(params, d_params)])
         self.model.param_update(n_params)
 
-        self.report(loss.data, 1, loss.TPTN)
+        self.report(loss.data, loss.TPTN)
 
 
 class SGD(Optimizer):
 
-    def __init__(self, alpha=0.0001):
+    def __init__(self, alpha=0.01):
         self.alpha = alpha
 
     def update(self, T, batch, lossfun=None):
         B = len(batch)
         d_params = tuple([0]*3)
         loss_lst = []
-        tptn = 0
+        tptn = [] 
 
         for b in batch:
             loss = lossfun(self.model, T, b)
             d_params = [d+l for d, l in zip(d_params, loss.backward())]
-            loss_lst = np.hstack((loss_lst, loss.data))
-            tptn += loss.TPTN
+            loss_lst.append(loss.data)
+            tptn.append(loss.TPTN)
 
         d_params = tuple([d/B for d in d_params])
         params = self.model.params
@@ -82,27 +79,27 @@ class SGD(Optimizer):
                 for p, d in zip(params, d_params)])
         self.model.param_update(n_params)
         
-        self.report(loss_lst, B, tptn)
+        self.report(loss_lst, tptn)
 
 
 
 class MomentumSGD(Optimizer):
 
-    def __init__(self, alpha=0.0001, eta=0.9):
+    def __init__(self, alpha=0.01, eta=0.9):
         self.alpha = alpha
         self.eta = eta
 
     def update(self, T, batch, lossfun=None):
         B = len(batch)
         d_params = tuple([0]*3)
-        loss_lst = np.array([])
-        tptn = 0
+        loss_lst = []
+        tptn = []
 
         for b in batch:
             loss = lossfun(self.model, T, b)
             d_params = [d+l for d, l in zip(d_params, loss.backward())]
-            loss_lst = np.hstack((loss_lst, loss.data))
-            tptn += loss.TPTN
+            loss_lst.append(loss.data)
+            tptn.append(loss.TPTN)
 
         params = self.model.params
         n_params = tuple([p - self.alpha*d + self.eta*w
@@ -111,9 +108,9 @@ class MomentumSGD(Optimizer):
                 for d, w in zip(d_params, self._w)])
         self.model.param_update(n_params)
         
-        self.report(loss_lst, B, tptn)
+        self.report(loss_lst, tptn)
     
     def reset(self):
         dim = self.model.dim
-        self._w =tuple([np.zeros((dim, dim)), np.zeros(dim), 0])
+        self._w = tuple([np.zeros((dim, dim)), np.zeros(dim), 0])
 

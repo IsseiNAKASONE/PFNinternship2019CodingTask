@@ -5,7 +5,7 @@ import numpy as np
 
 class Iterator:
 
-    def __init__(self, dataset, batch_size):
+    def __init__(self, dataset, batch_size=1):
         self.dataset = dataset
         self.batch_size = batch_size
         self.order_sampler = ShuffleOrderSampler() 
