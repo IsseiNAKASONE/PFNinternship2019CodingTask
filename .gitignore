@@ -4,5 +4,6 @@
 *.swo
 *.json
 *.png
+*.txt
 */
 ^D
