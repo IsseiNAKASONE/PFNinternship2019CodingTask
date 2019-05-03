@@ -84,17 +84,9 @@ def get_dataset(dirname, test_ratio=0):
 
 
 def natsorted(filelist):
-    pattern = '(\d+)_\w*.txt'
-    prog = re.compile(pattern)
-
-    sort = [None for i in range(len(filelist))]
-    for f in filelist:
-        result = re.match(pattern, f)
-        index = int(result.group(1))
-        if sort[index] is None:
-            sort[index] = f
-        else:
-            raise SyntaxError
-
-    return sort
+    prog = re.compile('(\d+)_\w*.txt')
+    try:
+        return sorted(filelist, key=lambda l: int(re.match(prog, l).group(1)))
+    except AttributeError:
+        raise SyntaxError
 
