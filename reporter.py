@@ -1,14 +1,12 @@
 import numpy as np
-import matplotlib as mpl
-mpl.use('Agg')
-import mpl.pyplot as plt
+import json
 
 
 
 class Reporter:
 
     def __init__(self):
-        self._observation = {}
+        self._observation = {} 
         self._first = False
 
     def report(self, key, value):
@@ -28,11 +26,25 @@ class Reporter:
             if key not in ignore:
                 value = values[-1]
                 if isinstance(value, np.int64):
-                    print('{}\t'.format(value), end='')
+                    print('{}\t'.format(int(value)), end='')
                 else:
                     print('{:.6f}\t'.format(value), end='')
         print()
-            
-    def plot_report(self, outfile='loss.png'):
-        pass
+     
+    def log_report(self, outfile='log.json'):
+        obj = []
+        length = len(list(self._observation.values())[0])
+        for i in range(length):
+            tup = {} 
+            for key, value in self._observation.items():
+                val = value[i]
+                if isinstance(val, np.int64):
+                    val = int(val)
+                else:
+                    val = float(val)
+                tup[key] = val
+            obj.append(tup)
+        
+        with open(outfile, 'w') as fd:
+            json.dump(obj, fd, sort_keys=True, indent=4)
 

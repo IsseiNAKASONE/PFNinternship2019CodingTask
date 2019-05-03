@@ -12,15 +12,18 @@ from iterator import Iterator
 
 
 dirpath = '../datasets/train/'
-batch_size = 128 
+predict = '../datasets/test/'
+batch_size = 128
 
-train, test = D.get_dataset(dirpath)
+train = D.get_dataset(dirpath)
 train_iter = Iterator(train, batch_size)
-test_iter = Iterator(test, batch_size)
 
 model = gnn.GNN()
-optimizer = op.SGD()
+optimizer = op.Adam()
 optimizer.setup(model)
-trainer = gnn.TrainGNN(optimizer, train_iter, test_iter)
+trainer = gnn.TrainGNN(optimizer, train_iter)
 trainer.start(epoch=100)
+
+pred = D.GraphDataset(predict)
+trainer.predict(pred)
 

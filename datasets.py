@@ -1,5 +1,6 @@
 import fnmatch
 import os
+import re
 from random import random
 import numpy as np
 import functions as F
@@ -25,6 +26,24 @@ class TupleDataset:
 
 
 
+class GraphDataset:
+
+    def __init__(self, dirname):
+        names = os.listdir(dirname)
+        _graphs = natsorted(fnmatch.filter(names, '*_graph.txt'))
+        self._filelist = [dirname+g for g in _graphs]
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            return [read_graph(f) for f in self._filelist[index]] 
+        else:
+            return read_graph(self._filelist[index])
+                
+    def __len__(self):
+        return len(self._filelist)
+
+
+
 def read_graph(filepath):
     with open(filepath) as fd:
         dim = int(fd.readline().split()[0])
@@ -41,13 +60,13 @@ def read_label(filepath):
         return int(fd.readline().split()[0])
 
 
-def get_dataset(dirname, test_ratio=0.25):
+def get_dataset(dirname, test_ratio=0):
     train_filelist = []
     test_filelist = []
 
     names = os.listdir(dirname)
-    graphs = sorted(fnmatch.filter(names, '*_graph.txt'))
-    labels = sorted(fnmatch.filter(names, '*_label.txt'))
+    graphs = natsorted(fnmatch.filter(names, '*_graph.txt'))
+    labels = natsorted(fnmatch.filter(names, '*_label.txt'))
 
     for g, l in zip(graphs, labels):
         if random() > test_ratio:
@@ -58,5 +77,24 @@ def get_dataset(dirname, test_ratio=0.25):
     train_datasets = TupleDataset(train_filelist)
     test_datasets = TupleDataset(test_filelist)
 
-    return train_datasets, test_datasets
+    if test_ratio == 0:
+        return train_datasets
+    else:
+        return train_datasets, test_datasets
+
+
+def natsorted(filelist):
+    pattern = '(\d+)_\w*.txt'
+    prog = re.compile(pattern)
+
+    sort = [None for i in range(len(filelist))]
+    for f in filelist:
+        result = re.match(pattern, f)
+        index = int(result.group(1))
+        if sort[index] is None:
+            sort[index] = f
+        else:
+            raise SyntaxError
+
+    return sort
 

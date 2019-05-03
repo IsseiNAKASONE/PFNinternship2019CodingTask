@@ -40,9 +40,7 @@ class BinaryCrossEntropy:
 
     def forward(self, model=None):
         if model is None: model = self.model
-
-        h_G = model(self.graph, self.T)
-        s = np.dot(model.A, h_G)+model.b
+        h_G, s = model(self.graph, self.T)
 
         ### calculate TPTN and loss
         if self.label:

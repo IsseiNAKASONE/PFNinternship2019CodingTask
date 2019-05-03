@@ -80,3 +80,4 @@ class ShuffleOrderSampler(object):
 
     def __call__(self, current_order, current_position):
         return self._random.permutation(len(current_order))    
+

@@ -8,9 +8,9 @@
 import gnn
 import datasets as D
 
-filepath = 'mono/0_graph.txt'
+filepath = '../datasets/train/0_graph.txt'
 model = gnn.GNN()
 graph = D.read_graph(filepath)
-h_G = model(graph, T=2)
+h_G, _ = model(graph, T=2)
 print(h_G)
 

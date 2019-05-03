@@ -20,7 +20,10 @@ class GNN:
         for t in range(T):
             h = np.dot(X, graph)
             X = np.maximum(0, np.dot(self.W, h))
-        return X.sum(axis=1)
+        h_G = X.sum(axis=1)
+        
+        s = np.dot(self.A, h_G)+self.b
+        return h_G, s 
 
     def __getattr__(self, key):
         if key == 'dim':      return self.in_size
@@ -64,6 +67,8 @@ class TrainGNN:
 
                 if self.test_iter is not None: self.evaluate()
                 self.reporter.print_report()
+
+        self.reporter.log_report()
     
     def evaluate(self):
         _val_loss = []
@@ -80,6 +85,21 @@ class TrainGNN:
                 _val_TPTN.append(loss.val_TPTN)
         test_iter.reset()
 
-        self.reporter.report('val/main/loss', np.average(np.array(_val_loss)))
-        self.reporter.report('val/main/accuracy', np.average(np.array(_val_TPTN)))
+        self.reporter.report('test/main/loss', np.average(np.array(_val_loss)))
+        self.reporter.report('test/main/accuracy', np.average(np.array(_val_TPTN)))
+
+    def predict(self, pred, model=None, outfile='predict.txt'):
+        if model is None: model = self.optimizer.model
+
+        pred_list = []
+        for p in pred:
+            _, s = model(p, self.T)
+            p = F.sigmoid(s)
+            if p > 1/2:
+                pred_list.append(1)
+            else:
+                pred_list.append(0)
+
+        with open(outfile, 'w') as fd:
+            for y in pred_list: fd.write(str(y)+'\n')
 
