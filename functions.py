@@ -18,7 +18,7 @@ def one_hot(dim):
 
 class BinaryCrossEntropy:
 
-    def __init__(self, model, T, inputs, eps):
+    def __init__(self, model, T, inputs, eps=0.001):
         self.model = model
         self.T = T
         self.graph = inputs[0]
@@ -32,7 +32,7 @@ class BinaryCrossEntropy:
 
     def __getattr__(self, key):
         if key == 'val_data':
-            _, loss = self.forward()
+            _, _, loss = self.forward()
             return loss
         if key == 'val_TPTN':
             if self.TPTN is None: self.forward()
@@ -52,12 +52,12 @@ class BinaryCrossEntropy:
             if self.TPTN is None:
                 self.TPTN = 0 if s > 0 else 1 
     
-        return h_G, loss
+        return h_G, s, loss
 
     def backward(self):
         model = self.model
         dim = self.model.dim 
-        h_G, L = self.forward()
+        h_G, s, L = self.forward()
         self.data = L
 
         ### W
@@ -66,18 +66,12 @@ class BinaryCrossEntropy:
             for c in range(dim):
                 model_h = self.model.copy_model()
                 model_h.W[r, c] += self.eps
-                _, L_h = self.forward(model=model_h)
+                _, _, L_h = self.forward(model=model_h)
                 dW[r, c] = (L_h-L)/self.eps
 
         ### A and b
-        s = np.dot(model.A, h_G)+model.b
         L_s = sigmoid(s)-self.label
         dA = L_s*h_G.T
 
         return dW, dA, L_s
-
-
-
-def binary_cross_entropy(model, T, inputs, eps=0.001):
-    return BinaryCrossEntropy(model, T, inputs, eps)
 

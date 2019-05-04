@@ -11,8 +11,8 @@ class GNN:
         self.in_size = in_size
         ### initialize parameter
         self.W =  np.random.normal(0, 0.4, (in_size, in_size)) if initialW is None else initialW.copy()
-        self.A =  np.random.normal(0, 0.4, in_size) if initialA is None else initialA.copy()
-        self.b =  0 if initialb is None else initialb
+        self._A =  np.random.normal(0, 0.4, in_size) if initialA is None else initialA.copy()
+        self._b =  0 if initialb is None else initialb
 
     def __call__(self, graph, T):
         X = np.zeros((self.in_size, graph.shape[0])) 
@@ -22,21 +22,21 @@ class GNN:
             X = np.maximum(0, np.dot(self.W, h))
         h_G = X.sum(axis=1)
         
-        s = np.dot(self.A, h_G)+self.b
+        s = np.dot(self._A, h_G)+self._b
         return h_G, s 
 
     def __getattr__(self, key):
         if key == 'dim':      return self.in_size
-        elif key == 'params': return self.W, self.A, self.b
+        elif key == 'params': return self.W, self._A, self._b
         else: raise AttributeError
 
     def param_update(self, params):
         self.W = params[0]
-        self.A = params[1]
-        self.b = params[2]
+        self._A = params[1]
+        self._b = params[2]
 
     def copy_model(self):
-        return GNN(self.in_size, self.W, self.A, self.b)
+        return GNN(self.in_size, self.W, self._A, self._b)
 
 
 
@@ -54,7 +54,7 @@ class TrainGNN:
         train_iter = self.train_iter
         while train_iter.epoch < epoch:
             batch = next(train_iter)
-            self.optimizer.update(T, batch, F.binary_cross_entropy)
+            self.optimizer.update(T, batch, F.BinaryCrossEntropy)
 
             if train_iter.is_new_epoch:
                 loss = self.optimizer.loss
@@ -80,7 +80,7 @@ class TrainGNN:
         while test_iter.epoch == 0:
             batch = next(test_iter)
             for b in batch:
-                loss = F.binary_cross_entropy(model, self.T, b)
+                loss = F.BinaryCrossEntropy(model, self.T, b)
                 _val_loss.append(loss.val_data)
                 _val_TPTN.append(loss.val_TPTN)
         test_iter.reset()

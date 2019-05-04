@@ -73,7 +73,7 @@ class Iterator:
 
 
 
-class ShuffleOrderSampler(object):
+class ShuffleOrderSampler:
 
     def __init__(self):
         self._random = np.random.random.__self__
