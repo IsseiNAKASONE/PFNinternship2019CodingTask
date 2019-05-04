@@ -10,9 +10,9 @@ def sigmoid(x):
     return 1/(1+np.exp(-np.clip(x,-709,100000)))
 
 
-def one_hot(dim):
-    z = np.zeros(dim)
-    z[0] = 1.
+def initial_vector(row, column):
+    z = np.zeros((row, column)) 
+    z[0, :] = 1
     return z
 
 
@@ -24,41 +24,26 @@ class BinaryCrossEntropy:
         self.graph = inputs[0]
         self.label = inputs[1]
         self.eps = eps
-        self.data = 0.
-        self.TPTN = None
+        self.forward()
 
     def __add__(self, bce):
         return self.data+self.bce
 
-    def __getattr__(self, key):
-        if key == 'val_data':
-            _, _, loss = self.forward()
-            return loss
-        if key == 'val_TPTN':
-            if self.TPTN is None: self.forward()
-            return self.TPTN
-
-    def forward(self, model=None):
-        if model is None: model = self.model
-        h_G, s = model(self.graph, self.T)
+    def forward(self):
+        self.h_G, self.s = self.model.forward(self.graph, self.T)
 
         ### calculate TPTN and loss
         if self.label:
-            loss = softplus(-s)
-            if self.TPTN is None:
-                self.TPTN = 1 if s > 0 else 0
+            loss = softplus(-self.s)
+            self.TPTN = 1 if self.s > 0 else 0
         else:
-            loss = softplus(s)
-            if self.TPTN is None:
-                self.TPTN = 0 if s > 0 else 1 
-    
-        return h_G, s, loss
+            loss = softplus(self.s)
+            self.TPTN = 0 if self.s > 0 else 1
+        self.data = loss
 
     def backward(self):
         model = self.model
         dim = self.model.dim 
-        h_G, s, L = self.forward()
-        self.data = L
 
         ### W
         dW = np.zeros((dim, dim))
@@ -66,12 +51,12 @@ class BinaryCrossEntropy:
             for c in range(dim):
                 model_h = self.model.copy_model()
                 model_h.W[r, c] += self.eps
-                _, _, L_h = self.forward(model=model_h)
-                dW[r, c] = (L_h-L)/self.eps
+                h_G_h, _ = model_h.forward(self.graph, self.T)
+                dW[r, c] = np.dot(model.A, (h_G_h-self.h_G)/self.eps)
 
         ### A and b
-        L_s = sigmoid(s)-self.label
-        dA = L_s*h_G.T
+        L_s = sigmoid(self.s)-self.label
+        dA = L_s*self.h_G.T
 
-        return dW, dA, L_s
+        return L_s*dW, dA, L_s
 

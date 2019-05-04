@@ -1,5 +1,6 @@
 import numpy as np
 import functions as F
+from links import Linear
 from reporter import Reporter
 
 
@@ -11,32 +12,37 @@ class GNN:
         self.in_size = in_size
         ### initialize parameter
         self.W =  np.random.normal(0, 0.4, (in_size, in_size)) if initialW is None else initialW.copy()
-        self._A =  np.random.normal(0, 0.4, in_size) if initialA is None else initialA.copy()
-        self._b =  0 if initialb is None else initialb
+        #self.chaine = Linear(in_size, in_size, initialW=initialW)
+        self.A =  np.random.normal(0, 0.4, in_size) if initialA is None else initialA.copy()
+        self.b =  0 if initialb is None else initialb
 
     def __call__(self, graph, T):
-        X = np.zeros((self.in_size, graph.shape[0])) 
-        X[0, :] = 1
+        _, s = self.forward(graph, T)
+        p = F.sigmoid(s)
+        if p > 1/2: return 1      
+        else:       return 0
+
+    def __getattr__(self, key):
+        if key == 'dim':      return self.in_size
+        elif key == 'params': return self.W, self.A, self.b
+        else: raise AttributeError
+
+    def forward(self, graph, T):
+        X = F.initial_vector(self.in_size, graph.shape[0])
         for t in range(T):
             h = np.dot(X, graph)
             X = np.maximum(0, np.dot(self.W, h))
         h_G = X.sum(axis=1)
-        
-        s = np.dot(self._A, h_G)+self._b
-        return h_G, s 
-
-    def __getattr__(self, key):
-        if key == 'dim':      return self.in_size
-        elif key == 'params': return self.W, self._A, self._b
-        else: raise AttributeError
+        s = np.dot(self.A, h_G)+self.b
+        return h_G, s
 
     def param_update(self, params):
         self.W = params[0]
-        self._A = params[1]
-        self._b = params[2]
+        self.A = params[1]
+        self.b = params[2]
 
     def copy_model(self):
-        return GNN(self.in_size, self.W, self._A, self._b)
+        return GNN(self.in_size, self.W, self.A, self.b)
 
 
 
@@ -81,25 +87,16 @@ class TrainGNN:
             batch = next(test_iter)
             for b in batch:
                 loss = F.BinaryCrossEntropy(model, self.T, b)
-                _val_loss.append(loss.val_data)
-                _val_TPTN.append(loss.val_TPTN)
+                _val_loss.append(loss.data)
+                _val_TPTN.append(loss.TPTN)
         test_iter.reset()
 
         self.reporter.report('test/main/loss', np.average(np.array(_val_loss)))
         self.reporter.report('test/main/accuracy', np.average(np.array(_val_TPTN)))
 
-    def predict(self, pred, model=None, outfile='predict.txt'):
-        if model is None: model = self.optimizer.model
-
-        pred_list = []
-        for p in pred:
-            _, s = model(p, self.T)
-            p = F.sigmoid(s)
-            if p > 1/2:
-                pred_list.append(1)
-            else:
-                pred_list.append(0)
-
+    def predict(self, pred, outfile='prediction.txt'):
+        model = self.optimizer.model
+        pred_list = [model(p, self.T) for p in pred]
         with open(outfile, 'w') as fd:
             for y in pred_list: fd.write(str(y)+'\n')
 
