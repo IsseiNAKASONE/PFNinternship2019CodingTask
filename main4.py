@@ -5,23 +5,24 @@
     Issei NAKASONE
 '''
 
-import gnn
+
 import datasets as D
 import optimizers as op
+from gnn import GNN, TrainGNN 
 from iterator import Iterator
 
 
 dirpath = '../datasets/train/'
 predict = '../datasets/test/'
-batch_size = 128
+batch_size = 256
 
 train = D.get_dataset(dirpath)
 train_iter = Iterator(train, batch_size)
 
-model = gnn.GNN()
+model = GNN()
 optimizer = op.Adam()
 optimizer.setup(model)
-trainer = gnn.TrainGNN(optimizer, train_iter)
+trainer = TrainGNN(optimizer, train_iter)
 trainer.start(epoch=100)
 
 pred = D.GraphDataset(predict)

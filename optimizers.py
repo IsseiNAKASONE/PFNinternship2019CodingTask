@@ -85,7 +85,7 @@ class SGD(Optimizer):
 
 class MomentumSGD(Optimizer):
 
-    def __init__(self, alpha=0.0001, eta=0.9):
+    def __init__(self, alpha=0.01, eta=0.9):
         self.alpha = alpha
         self.eta = eta
         self._w = tuple([0]*3)
@@ -106,8 +106,8 @@ class MomentumSGD(Optimizer):
         params = self.model.params
         n_params = tuple([p - self.alpha*g + self.eta*w
                 for p, g, w in zip(params, grad, self._w)])
-        self._w = tuple([-self.alpha*d + self.eta*w
-                for d, w in zip(grad, self._w)])
+        self._w = tuple([-self.alpha*g + self.eta*w
+                for g, w in zip(grad, self._w)])
         self.model.param_update(n_params)
         
         self.report(loss_lst, tptn)
@@ -116,7 +116,7 @@ class MomentumSGD(Optimizer):
 
 class Adam(Optimizer):
 
-    def __init__(self, alpha=0.001, beta1=0.9, beta2=0.999, eps=10**-9):
+    def __init__(self, alpha=0.01, beta1=0.9, beta2=0.999, eps=10**-9):
         self.alpha = alpha
         self.beta1 = beta1
         self.beta2 = beta2

@@ -5,9 +5,9 @@
     Issei NAKASONE
 '''
 
-import gnn
 import datasets as D
 import optimizers as op
+from gnn import GNN, TrainGNN
 from iterator import Iterator
 
 
@@ -18,10 +18,10 @@ train, test = D.get_dataset(dirpath, test_ratio=0.25)
 train_iter = Iterator(train, batch_size)
 test_iter = Iterator(test, batch_size)
 
-model = gnn.GNN()
+model = GNN()
 optimizer = op.SGD()
 #optimizer = op.MomentumSGD()
 optimizer.setup(model)
-trainer = gnn.TrainGNN(optimizer, train_iter, test_iter)
+trainer = TrainGNN(optimizer, train_iter, test_iter)
 trainer.start(epoch=50)
 

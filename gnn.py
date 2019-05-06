@@ -1,6 +1,5 @@
 import numpy as np
 import functions as F
-from links import Linear
 from reporter import Reporter
 
 
@@ -12,7 +11,6 @@ class GNN:
         self.in_size = in_size
         ### initialize parameter
         self.W =  np.random.normal(0, 0.4, (in_size, in_size)) if initialW is None else initialW.copy()
-        #self.chaine = Linear(in_size, in_size, initialW=initialW)
         self.A =  np.random.normal(0, 0.4, in_size) if initialA is None else initialA.copy()
         self.b =  0 if initialb is None else initialb
 
@@ -26,7 +24,7 @@ class GNN:
         if key == 'dim':      return self.in_size
         elif key == 'params': return self.W, self.A, self.b
         else: raise AttributeError
-
+    
     def forward(self, graph, T):
         X = F.initial_vector(self.in_size, graph.shape[0])
         for t in range(T):
@@ -54,7 +52,7 @@ class TrainGNN:
         self.optimizer = optimizer
         self.reporter = Reporter() 
 
-    def start(self, epoch=100, T=2):
+    def start(self, epoch=100, T=2, outfile='log.json'):
         self.T = T
 
         train_iter = self.train_iter
@@ -74,8 +72,8 @@ class TrainGNN:
                 if self.test_iter is not None: self.evaluate()
                 self.reporter.print_report()
 
-        self.reporter.log_report()
-    
+        self.reporter.log_report(outfile)
+
     def evaluate(self):
         _val_loss = []
         _val_TPTN = []

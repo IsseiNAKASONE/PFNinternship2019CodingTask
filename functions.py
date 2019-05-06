@@ -10,13 +10,6 @@ def sigmoid(x):
     return 1/(1+np.exp(-np.clip(x,-709,100000)))
 
 
-def heaviside(x, c=1/2):
-    if not x:
-        return c
-    else:
-        return 1 if x>0 else 0
-
-
 def initial_vector(row, column):
     z = np.zeros((row, column)) 
     z[0, :] = 1
@@ -67,4 +60,3 @@ class BinaryCrossEntropy:
         dA = L_s*self.h_G.T
 
         return dW, dA, L_s
-
