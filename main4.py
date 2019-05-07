@@ -7,8 +7,8 @@
 
 
 import datasets as D
-import optimizers as op
-from gnn import GNN, TrainGNN 
+import mlp 
+from gin import GIN, TrainGIN 
 from iterator import Iterator
 
 
@@ -19,10 +19,10 @@ batch_size = 256
 train = D.get_dataset(dirpath)
 train_iter = Iterator(train, batch_size)
 
-model = GNN()
-optimizer = op.Adam()
+model = GIN()
+optimizer = mlp.Adam()
 optimizer.setup(model)
-trainer = TrainGNN(optimizer, train_iter)
+trainer = TrainGIN(optimizer, train_iter)
 trainer.start(epoch=100)
 
 pred = D.GraphDataset(predict)
