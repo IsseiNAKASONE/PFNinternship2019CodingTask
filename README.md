@@ -16,8 +16,16 @@ $ python3 main1.py
 ┃┣ train/<br>
 ┃┗test/<br>
 ┗ src/<br>
+&emsp;┣ prediction.txt<br>
 &emsp;┗ *.py<br><br>
 `main3.py`，`main4.py`を実行すると各エポックごとの損失値とaccuracyのログファイルが
-カレントディレクトリに`log.json`の名前で出力されるようになっている．<br>
+カレントディレクトリに`log.json`の名前で出力されるようになっている．
+この出力ファイル名は関数引数で指定可能である．<br>
+例えば，同じ条件で何回か学習を実行し，そのログファイル`log_1.json`,`log_2.json`,...が`./foo/`ディレクトリ下
+にあるとする．このとき，<br>
+```
+$ python3 plot2d.py -i foo
+```
+を実行すると，平均損失，平均accuracyのグラフがエラーバー付きで`foo`下に出力される．
 また，`main4.py`についてはテストデータに対する予測ラベルが`prediction.txt`として出力される．
  
